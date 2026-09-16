@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>企业会议室预约系统 — SPEC</title>
+<style>
+/* ========== Reset & Base ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { min-height: 100%; }
+body {
+  position: relative;
+  font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", "Noto Sans SC", sans-serif;
+  color: #1f2d3d;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  background: linear-gradient(160deg, #f8fafc 0%, #ffffff 45%, #cfe0f5 100%);
+  min-height: 100vh;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 45% 35% at 12% 8%, rgba(255,255,255,0.55) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 88% 90%, rgba(255,255,255,0.45) 0%, transparent 55%);
+}
+body > * { position: relative; z-index: 1; }
+
+/* ========== 封面 Hero ========== */
+.title {
+  position: relative;
+  overflow: hidden;
+  padding: 56px 40px;
+  text-align: center;
+  background: linear-gradient(135deg, #1e3a5f 0%, #3b82f6 50%, #4f8ef7 100%);
+  color: #ffffff;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+.title::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 70% 55% at 18% 82%, rgba(255,255,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 40% at 82% 18%, rgba(255,255,255,0.08) 0%, transparent 55%);
+  pointer-events: none;
+}
+.title > * { position: relative; z-index: 1; }
+.title h1 { font-size: 28px; font-weight: 800; margin: 0 0 14px 0; letter-spacing: 1px; color: #ffffff; }
+.title .accent-line {
+  width: 48px; height: 3px; background: rgba(255,255,255,0.85);
+  margin: 0 auto 18px; border-radius: 2px;
+}
+.title p { font-size: 15px; color: rgba(255,255,255,0.85); margin: 0; line-height: 1.7; }
+.title .badge {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 4px 14px;
+  font-size: 12px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 20px;
+  color: rgba(255,255,255,0.9);
+}
+
+/* ========== 章节标题 ========== */
+h1.heading {
+  font-size: 28px;
+  color: #0f1e33;
+  margin: 36px 0 16px 0;
+  font-weight: 700;
+  border-left: 4px solid #3b82f6;
+  padding-left: 16px;
+}
+h2.heading {
+  font-size: 22px;
+  color: #0f1e33;
+  margin: 28px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #c9d6f3;
+  font-weight: 600;
+}
+h3.heading {
+  font-size: 18px;
+  color: #0f1e33;
+  margin: 20px 0 10px;
+  font-weight: 600;
+}
+
+/* ========== 正文 / 列表 ========== */
+.paragraph { font-size: 15px; color: #1f2d3d; line-height: 1.8; margin: 0 0 16px 0; text-indent: 2em; }
+.list { margin: 0 0 16px 0; padding-left: 24px; font-size: 15px; color: #1f2d3d; line-height: 1.8; }
+.list li { margin-bottom: 8px; }
+.list li::marker { color: #3b82f6; }
+
+/* ========== 正文区卡片化容器 ========== */
+.doc-section {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 24px 28px;
+  margin: 0 0 16px 0;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+.doc-section.alt { background: #e6edf6; box-shadow: none; }
+
+/* ========== callout ========== */
+.callout {
+  margin: 0 0 16px 0;
+  padding: 16px 24px;
+  background: #e8f0fe;
+  border-left: 4px solid #3b82f6;
+  border-radius: 8px;
+}
+.callout[data-variant="warning"] { background: #FFF3E0; border-left-color: #d97706; }
+.callout[data-variant="quote"]   { background: #f0fdfa; border-left-color: #14b8a6; }
+.callout p { font-size: 15px; color: #1f2d3d; margin: 0; line-height: 1.8; }
+
+/* ========== 表格 ========== */
+.table-wrap {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  overflow: hidden;
+  margin: 0 0 16px 0;
+}
+.table-caption {
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #c9d6f3, #e8f0fe);
+  color: #0f1e33;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  border-bottom: 1px solid #dbe4ef;
+}
+table.table { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed; }
+table.table thead th {
+  padding: 12px 16px;
+  text-align: left;
+  background: #c9d6f3;
+  color: #0f1e33;
+  font-weight: 700;
+  border-bottom: 2px solid #dbe4ef;
+  word-break: break-word;
+}
+table.table tbody td { padding: 12px 16px; border-bottom: 1px solid #dbe4ef; color: #1f2d3d; word-break: break-word; }
+table.table tbody tr:last-child td { border-bottom: none; }
+table.table tbody tr:hover { background: #e8f0fe; }
+
+/* ========== stat ========== */
+.stat-grid { display: flex; gap: 16px; margin: 0 0 16px 0; }
+.stat {
+  flex: 1;
+  text-align: center;
+  padding: 24px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border-top: 3px solid #3b82f6;
+}
+.stat .num { font-size: 28px; color: #3b82f6; font-weight: 800; line-height: 1.1; }
+.stat .label { font-size: 12px; color: #5b6b80; margin-top: 6px; }
+
+/* ========== card ========== */
+.card-grid { display: flex; gap: 16px; margin: 0 0 16px 0; }
+.card {
+  flex: 1;
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border-top: 3px solid #3b82f6;
+}
+.card h3 { font-size: 18px; color: #0f1e33; margin: 0 0 8px 0; font-weight: 700; }
+.card p  { font-size: 14px; color: #5b6b80; margin: 0; line-height: 1.7; }
+
+/* ========== divider ========== */
+.divider { margin: 32px 0; text-align: center; user-select: none; }
+.divider .line {
+  display: inline-block;
+  width: 36px;
+  height: 1px;
+  vertical-align: middle;
+  background: linear-gradient(to right, transparent, #e8f0fe);
+}
+.divider .line:last-child { background: linear-gradient(to left, transparent, #e8f0fe); }
+.divider .diamond {
+  display: inline-block;
+  width: 8px; height: 8px;
+  margin: 0 12px;
+  vertical-align: middle;
+  transform: rotate(45deg);
+  background: #3b82f6;
+  border-radius: 1px;
+  box-shadow: 0 0 0 2px #f4f7fb;
+}
+
+/* ========== 尾页 ========== */
+.end_page {
+  margin-top: 24px;
+  padding: 56px 24px;
+  text-align: center;
+  background: linear-gradient(135deg, #c9d6f3 0%, #e8f0fe 100%);
+  border-radius: 16px;
+}
+.end_page h1 { font-size: 28px; color: #0f1e33; margin: 0 0 16px 0; font-weight: 800; }
+.end_page p  { font-size: 15px; color: #5b6b80; margin: 0; line-height: 1.8; }
+
+/* ========== 响应式 ========== */
+@media screen and (max-width: 600px) {
+  body { padding: 16px !important; }
+  h1 { font-size: 22px !important; }
+  h2 { font-size: 18px !important; }
+  h3 { font-size: 16px !important; }
+  .stat-grid, .card-grid { flex-direction: column; }
+}
+
+/* ========== 打印优化 ========== */
+@media print {
+  body {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #f4f7fb;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  body::before { display: none; }
+  .title, .end_page { border-radius: 0; box-shadow: none; }
+  .doc-section, .card, .stat, .table-wrap { box-shadow: none; border: 1px solid #dbe4ef; }
+  section { break-inside: auto !important; }
+}
+</style>
+</head>
+<body class="mode-doc" data-palette="ink-blue">
+
+  <!-- ===== 封面 ===== -->
+  <section class="title">
+    <h1>企业会议室预约系统</h1>
+    <div class="accent-line"></div>
+    <p>软件规格说明书（SPEC）</p>
+    <span class="badge">轻量级 · 纯前端 + Node.js 桥接</span>
+  </section>
+
+  <!-- ===== 1. Problem Statement ===== -->
+  <h1 class="heading">1. Problem Statement（问题陈述）</h1>
+
+  <div class="doc-section">
+    <p class="paragraph" style="text-indent:0;">
+      小型团队（10-30 人，1-3 间会议室，部门内部使用）在会议室预约中面临四个核心痛点：
+    </p>
+    <ul class="list">
+      <li><strong>冲突频发</strong>：多人同时预约同一会议室，撞车后临时协调困难</li>
+      <li><strong>资源不透明</strong>：不知道哪些会议室空闲、能坐多少人</li>
+      <li><strong>流程混乱</strong>：预约没有统一入口，有人口头、有人微信群、有人贴纸条</li>
+      <li><strong>利用率低</strong>：会议室被长期"占着不用"，真正需要的人反而订不到</li>
+    </ul>
+  </div>
+
+  <!-- ===== 2. Proposed Solution ===== -->
+  <h1 class="heading">2. Proposed Solution（方案描述）</h1>
+
+  <div class="doc-section">
+    <p class="paragraph" style="text-indent:0;">
+      构建一个轻量级会议室预约系统，提供统一的预约入口，支持日历/列表两种视图查看可用时段，先到先得规则自动检测冲突并推荐替代选项，站内消息实时反馈预约状态，替代现有口头/微信群等混乱预约方式。
+    </p>
+  </div>
+
+  <!-- ===== 3. Target Users ===== -->
+  <h1 class="heading">3. Target Users（目标用户）</h1>
+
+  <div class="table-wrap">
+    <div class="table-caption">目标用户画像</div>
+    <table class="table" data-caption="目标用户画像">
+      <colgroup>
+        <col style="width:25%">
+        <col style="width:75%">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>维度</th>
+          <th>说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>规模</td>
+          <td>10-30 人</td>
+        </tr>
+        <tr>
+          <td>角色</td>
+          <td>仅普通员工（无管理员、无访客）</td>
+        </tr>
+        <tr>
+          <td>场景</td>
+          <td>部门内部使用，1-3 间会议室</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===== 4. Core Features ===== -->
+  <h1 class="heading">4. Core Features（核心功能）</h1>
+
+  <div class="table-wrap">
+    <div class="table-caption">核心功能清单</div>
+    <table class="table" data-caption="核心功能清单">
+      <colgroup>
+        <col style="width:10%">
+        <col style="width:22%">
+        <col style="width:68%">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>编号</th>
+          <th>功能</th>
+          <th>说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>F1</td>
+          <td>用户注册/登录</td>
+          <td>用户名+密码，用于身份标识和"我的预约"隔离</td>
+        </tr>
+        <tr>
+          <td>F2</td>
+          <td>快速预约</td>
+          <td>选时间段 → 选会议室 → 填会议主题 → 完成</td>
+        </tr>
+        <tr>
+          <td>F3</td>
+          <td>先查后订</td>
+          <td>查看各会议室可用时段后，选定空闲时段再预约</td>
+        </tr>
+        <tr>
+          <td>F4</td>
+          <td>日历视图</td>
+          <td>周视图/日视图，时间格子展示已占用/空闲</td>
+        </tr>
+        <tr>
+          <td>F5</td>
+          <td>列表视图</td>
+          <td>按会议室列出可用时间段，文字列表形式</td>
+        </tr>
+        <tr>
+          <td>F6</td>
+          <td>视图切换</td>
+          <td>日历视图与列表视图自由切换</td>
+        </tr>
+        <tr>
+          <td>F7</td>
+          <td>查看我的预约</td>
+          <td>列出自己所有预约，含时间和会议室</td>
+        </tr>
+        <tr>
+          <td>F8</td>
+          <td>取消预约</td>
+          <td>随时取消，释放时段</td>
+        </tr>
+        <tr>
+          <td>F9</td>
+          <td>修改预约</td>
+          <td>改时间或换会议室</td>
+        </tr>
+        <tr>
+          <td>F10</td>
+          <td>冲突检测</td>
+          <td>同一会议室同一时段，先到先得，拒绝后提交者</td>
+        </tr>
+        <tr>
+          <td>F11</td>
+          <td>推荐替代</td>
+          <td>冲突时推荐其他空闲会议室或邻近时段</td>
+        </tr>
+        <tr>
+          <td>F12</td>
+          <td>站内消息</td>
+          <td>预约成功/取消时在系统内弹出提示</td>
+        </tr>
+        <tr>
+          <td>F13</td>
+          <td>数据持久化</td>
+          <td>JSON 文件存储，重启不丢失</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===== 5. Technical Constraints ===== -->
+  <h1 class="heading">5. Technical Constraints（技术约束）</h1>
+
+  <div class="table-wrap">
+    <div class="table-caption">技术约束</div>
+    <table class="table" data-caption="技术约束">
+      <colgroup>
+        <col style="width:20%">
+        <col style="width:80%">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>约束</th>
+          <th>说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>前端</td>
+          <td>纯前端单页应用，HTML/CSS/JS，双击即用</td>
+        </tr>
+        <tr>
+          <td>后端</td>
+          <td>轻量 Node.js 单文件服务，负责读写共享 JSON</td>
+        </tr>
+        <tr>
+          <td>存储</td>
+          <td>JSON 文件，数据共享，支持跨人冲突检测</td>
+        </tr>
+        <tr>
+          <td>部署</td>
+          <td>每人本地双击 HTML 打开，后端服务部署一处即可</td>
+        </tr>
+        <tr>
+          <td>环境</td>
+          <td>本机已安装 Node.js，无需额外依赖</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===== 6. Non-goals ===== -->
+  <h1 class="heading">6. Non-goals（明确不做的事）</h1>
+
+  <div class="doc-section alt">
+    <ul class="list">
+      <li>不做审批流程（预约提交即生效）</li>
+      <li>不做会议室设备管理（不维护投影仪、白板等清单，会议室仅显示名称）</li>
+      <li>不做外部通知（不发邮件、不接企业微信/钉钉）</li>
+      <li>不做数据统计报表（不做利用率分析、趋势报表）</li>
+      <li>不做管理员角色</li>
+      <li>不做访客/外部人员预约</li>
+    </ul>
+  </div>
+
+  <!-- ===== 7. Success Criteria ===== -->
+  <h1 class="heading">7. Success Criteria（成功标准）</h1>
+
+  <div class="table-wrap">
+    <div class="table-caption">成功标准</div>
+    <table class="table" data-caption="成功标准">
+      <colgroup>
+        <col style="width:10%">
+        <col style="width:52%">
+        <col style="width:38%">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>编号</th>
+          <th>标准</th>
+          <th>验证方式</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>S1</td>
+          <td>团队成员能完成注册、登录、预约、查看、取消、修改全流程操作</td>
+          <td>功能测试</td>
+        </tr>
+        <tr>
+          <td>S2</td>
+          <td>数据持久化，重启后不丢失</td>
+          <td>重启验证</td>
+        </tr>
+        <tr>
+          <td>S3</td>
+          <td>同一会议室同一时段冲突检测准确，后提交者被正确拒绝</td>
+          <td>冲突测试</td>
+        </tr>
+        <tr>
+          <td>S4</td>
+          <td>冲突时能推荐替代会议室或邻近时段</td>
+          <td>推荐测试</td>
+        </tr>
+        <tr>
+          <td>S5</td>
+          <td>日历视图/列表视图切换正常，可用时段展示准确</td>
+          <td>视图测试</td>
+        </tr>
+        <tr>
+          <td>S6</td>
+          <td>站内消息在预约成功/取消时正确弹出</td>
+          <td>消息测试</td>
+        </tr>
+        <tr>
+          <td>S7</td>
+          <td>跨用户数据共享正常，A 的预约能被 B 看到</td>
+          <td>共享测试</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="divider"><span class="line"></span><span class="diamond"></span><span class="line"></span></div>
+
+  <!-- ===== 尾页 ===== -->
+  <section class="title end_page">
+    <h1>SPEC 确认完毕</h1>
+    <p>如需进入 PRD 阶段或直接开发，请告知。</p>
+  </section>
+
+</body>
+</html>
