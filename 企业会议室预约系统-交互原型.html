@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>企业会议室预约系统 — 交互原型</title>
+<style>
+/* ============ Reset & 基础 ============ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", "Noto Sans SC", sans-serif;
+  font-size: 13px;
+  color: #1f2d3d;
+  background: #f6f9fc;
+  line-height: 1.6;
+}
+button { font-family: inherit; font-size: 13px; cursor: pointer; border: none; background: none; }
+input, select { font-family: inherit; font-size: 13px; }
+[hidden] { display: none !important; }
+
+/* ============ 通用组件 ============ */
+.btn {
+  display: inline-block; padding: 6px 14px; border-radius: 6px;
+  border: 1px solid #dbe4ef; background: #ffffff; color: #1f2d3d;
+  transition: all .15s; white-space: nowrap;
+}
+.btn:hover { border-color: #3b82f6; color: #3b82f6; }
+.btn-primary { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+.btn-primary:hover { background: #2f6fe0; color: #fff; }
+.btn-danger { color: #dc2626; border-color: #f3c1c1; }
+.btn-danger:hover { background: #fee2e2; border-color: #dc2626; color: #b91c1c; }
+.btn-sm { padding: 3px 10px; font-size: 12px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ============ FR 角标 ============ */
+.frb {
+  display: none; position: absolute; top: -6px; right: -6px;
+  font-size: 9px; font-weight: 700; padding: 1px 5px;
+  border-radius: 8px; color: #fff; z-index: 5;
+  box-shadow: 0 1px 3px rgba(0,0,0,.15); pointer-events: none;
+}
+.frb[data-p="P0"] { background: #3b82f6; }
+.frb[data-p="P1"] { background: #f97316; }
+body.fr-on .frb { display: inline-block; }
+body.fr-on .fr-tag { display: inline-flex; }
+.fr-tag {
+  display: none; position: relative; font-size: 9px; font-weight: 700;
+  padding: 1px 5px; border-radius: 8px; color: #fff; align-self: center; margin-left: 6px; flex: none;
+}
+.fr-tag[data-p="P0"] { background: #3b82f6; }
+.fr-tag[data-p="P1"] { background: #f97316; }
+
+/* ============ 登录页 ============ */
+.auth-page {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(160deg, #f8fafc 0%, #ffffff 45%, #d8e7fa 100%);
+  padding: 20px;
+}
+.auth-card {
+  position: relative; width: 380px; background: #ffffff; border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(15,30,51,.1); padding: 36px 32px;
+}
+.auth-card .logo-icon { width: 40px; height: 40px; margin: 0 auto 12px; display: block; }
+.auth-card h1 { font-size: 20px; text-align: center; color: #0f1e33; font-weight: 700; }
+.auth-card .sub { text-align: center; color: #5b6b80; font-size: 12px; margin: 4px 0 20px; }
+.auth-tabs { display: flex; background: #f0f5fa; border-radius: 8px; padding: 3px; margin-bottom: 18px; }
+.auth-tabs .tab {
+  flex: 1; padding: 7px 0; border-radius: 6px; color: #5b6b80; font-weight: 600; position: relative;
+}
+.auth-tabs .tab.active { background: #ffffff; color: #3b82f6; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.form-row { margin-bottom: 14px; position: relative; }
+.form-row label { display: block; font-size: 12px; color: #5b6b80; margin-bottom: 5px; font-weight: 600; }
+.form-row input, .form-row select {
+  width: 100%; padding: 8px 10px; border: 1px solid #dbe4ef; border-radius: 6px; outline: none;
+  background: #ffffff; color: #1f2d3d;
+}
+.form-row input:focus, .form-row select:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,.12); }
+.form-row .err { color: #dc2626; font-size: 11px; margin-top: 4px; min-height: 14px; }
+.auth-card .btn-primary { width: 100%; padding: 9px 0; font-size: 14px; margin-top: 4px; }
+.auth-tip {
+  margin-top: 16px; padding: 8px 12px; background: #e8f0fe; border-radius: 6px;
+  color: #2563eb; font-size: 12px; text-align: center;
+}
+
+/* ============ 顶栏 ============ */
+.topbar {
+  position: sticky; top: 0; z-index: 40;
+  display: flex; align-items: center; gap: 16px;
+  background: #ffffff; border-bottom: 1px solid #dbe4ef;
+  padding: 0 20px; height: 52px; box-shadow: 0 1px 4px rgba(0,0,0,.04);
+}
+.topbar .brand { font-size: 15px; font-weight: 700; color: #0f1e33; display: flex; align-items: center; gap: 8px; flex: none; }
+.topbar .brand svg { width: 20px; height: 20px; }
+.view-nav { display: flex; gap: 4px; flex: 1; }
+.view-nav button {
+  position: relative; padding: 6px 14px; border-radius: 6px; color: #5b6b80; font-weight: 600;
+}
+.view-nav button:hover { background: #f0f5fa; color: #3b82f6; }
+.view-nav button.active { background: #e8f0fe; color: #2563eb; }
+.user-box { display: flex; align-items: center; gap: 10px; flex: none; }
+.user-box .avatar {
+  width: 28px; height: 28px; border-radius: 50%; background: #3b82f6; color: #fff;
+  display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
+}
+.user-box #current-user { font-weight: 600; color: #1f2d3d; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ============ 主内容区 ============ */
+main { max-width: 1080px; margin: 0 auto; padding: 16px 20px 90px; }
+.view-head {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;
+}
+.view-head .date-label { font-size: 16px; font-weight: 700; color: #0f1e33; margin: 0 4px; }
+.view-head .spacer { flex: 1; }
+.view-head .hint { font-size: 12px; color: #5b6b80; }
+
+/* ============ 周视图 ============ */
+.week-grid { background: #ffffff; border: 1px solid #dbe4ef; border-radius: 10px; overflow: hidden; }
+.wg-head { display: grid; grid-template-columns: 70px repeat(7, 1fr); background: #f0f5fa; border-bottom: 1px solid #dbe4ef; }
+.wg-head > div { padding: 8px 6px; text-align: center; font-weight: 700; color: #0f1e33; font-size: 12px; position: relative; }
+.wg-head > div small { display: block; font-weight: 400; color: #5b6b80; font-size: 11px; }
+.wg-head > .today-col { background: #e8f0fe; color: #2563eb; }
+.wg-row { display: grid; grid-template-columns: 70px repeat(7, 1fr); border-bottom: 1px solid #eef2f7; }
+.wg-row:last-child { border-bottom: none; }
+.wg-time { padding: 6px 4px; text-align: center; color: #5b6b80; font-size: 11px; background: #fafcfe; border-right: 1px solid #eef2f7; align-self: stretch; display: flex; align-items: center; justify-content: center; }
+.wg-cell { position: relative; padding: 4px; min-height: 34px; display: flex; align-items: center; justify-content: center; gap: 4px; border-right: 1px solid #f2f6fa; cursor: pointer; }
+.wg-cell:hover { background: #f0f7ff; }
+.wg-cell .wdot { width: 12px; height: 12px; border-radius: 3px; }
+.wdot.free { background: #c8e6c9; border: 1px solid #a5d6a7; }
+.wdot.busy { background: #ffcdd2; border: 1px solid #ef9a9a; }
+.wg-cell .wcount { font-size: 10px; color: #5b6b80; }
+
+/* ============ 日视图 ============ */
+.day-grid { background: #ffffff; border: 1px solid #dbe4ef; border-radius: 10px; overflow: hidden; }
+.dg-head { display: grid; grid-template-columns: 70px repeat(3, 1fr); background: #f0f5fa; border-bottom: 1px solid #dbe4ef; }
+.dg-head > div { padding: 8px 6px; text-align: center; font-weight: 700; color: #0f1e33; font-size: 13px; position: relative; }
+.dg-row { display: grid; grid-template-columns: 70px repeat(3, 1fr); border-bottom: 1px solid #eef2f7; }
+.dg-row:last-child { border-bottom: none; }
+.dg-time { padding: 6px 4px; text-align: center; color: #5b6b80; font-size: 11px; background: #fafcfe; border-right: 1px solid #eef2f7; display: flex; align-items: center; justify-content: center; }
+.dg-cell { position: relative; min-height: 40px; padding: 3px 6px; border-right: 1px solid #f2f6fa; display: flex; flex-direction: column; justify-content: center; }
+.dg-cell:last-child { border-right: none; }
+.dg-free {
+  background: #f6fbf6; cursor: pointer; position: relative;
+  color: #2e7d32; font-size: 11px; display: flex; align-items: center; justify-content: center;
+}
+.dg-free:hover { background: #e3f5e4; }
+.dg-free .plus { font-size: 14px; font-weight: 700; opacity: .6; }
+.dg-busy {
+  background: #e8f0fe; border-left: 3px solid #3b82f6; cursor: pointer; position: relative;
+  font-size: 11px; overflow: hidden; justify-content: center; display: flex; flex-direction: column;
+}
+.dg-busy.mine { background: #dceafd; border-left-color: #2563eb; }
+.dg-busy .btopic { font-weight: 700; color: #0f1e33; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dg-busy .bowner { color: #5b6b80; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ============ 列表视图 ============ */
+.room-group { background: #ffffff; border: 1px solid #dbe4ef; border-radius: 10px; margin-bottom: 14px; overflow: hidden; }
+.room-group .rg-title {
+  padding: 10px 16px; font-weight: 700; color: #0f1e33; font-size: 14px;
+  background: #f0f5fa; border-bottom: 1px solid #dbe4ef; display: flex; align-items: center; position: relative;
+}
+.room-group .rg-title .rg-count { margin-left: auto; font-size: 12px; color: #5b6b80; font-weight: 400; }
+.slot-item {
+  display: flex; align-items: center; gap: 12px; padding: 9px 16px; border-bottom: 1px solid #f2f6fa;
+}
+.slot-item:last-child { border-bottom: none; }
+.slot-item .s-time { font-weight: 700; color: #1f2d3d; width: 110px; flex: none; position: relative; }
+.slot-item .s-info { flex: 1; color: #5b6b80; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slot-item .s-badge { flex: none; font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+.s-badge.busy { background: #fee2e2; color: #b91c1c; }
+.s-badge.free { background: #e8f5e9; color: #2e7d32; }
+.slot-item .s-act { flex: none; }
+
+/* ============ 我的预约 ============ */
+.my-card {
+  background: #ffffff; border: 1px solid #dbe4ef; border-radius: 10px;
+  padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 14px; position: relative;
+}
+.my-card.past { opacity: .55; }
+.my-card .m-date { width: 100px; flex: none; }
+.my-card .m-date .d1 { font-size: 15px; font-weight: 700; color: #0f1e33; }
+.my-card .m-date .d2 { font-size: 11px; color: #5b6b80; }
+.my-card .m-main { flex: 1; min-width: 0; }
+.my-card .m-main .t { font-weight: 700; color: #1f2d3d; font-size: 14px; }
+.my-card .m-main .meta { color: #5b6b80; font-size: 12px; margin-top: 2px; }
+.my-card .m-actions { display: flex; gap: 8px; flex: none; }
+.empty-tip { text-align: center; color: #5b6b80; padding: 48px 20px; background: #ffffff; border: 1px dashed #dbe4ef; border-radius: 10px; }
+
+/* ============ 弹窗 ============ */
+.modal-mask {
+  position: fixed; inset: 0; background: rgba(15,30,51,.45); z-index: 100;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.modal {
+  position: relative; background: #ffffff; border-radius: 12px; width: 420px; max-width: 100%;
+  max-height: 86vh; overflow: auto; box-shadow: 0 12px 40px rgba(0,0,0,.2); padding: 22px 24px;
+}
+.modal h3 { font-size: 16px; color: #0f1e33; margin-bottom: 16px; display: flex; align-items: center; }
+.modal .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal .form-grid .full { grid-column: 1 / -1; }
+.modal .form-row { margin-bottom: 0; }
+.modal-btns { display: flex; gap: 10px; margin-top: 18px; }
+.modal-btns .btn { flex: 1; padding: 8px 0; }
+.conflict-panel h3 { color: #b91c1c; }
+.conflict-panel .c-msg { background: #fee2e2; color: #b91c1c; padding: 10px 12px; border-radius: 8px; margin-bottom: 14px; font-size: 13px; position: relative; }
+.conflict-panel .alt-title { font-size: 12px; color: #5b6b80; font-weight: 700; margin-bottom: 8px; }
+.alt-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  border: 1px solid #dbe4ef; border-radius: 8px; padding: 9px 12px; margin-bottom: 8px;
+}
+.alt-item:hover { border-color: #3b82f6; background: #f0f7ff; }
+.alt-item .a-label { flex: 1; font-weight: 600; color: #1f2d3d; }
+.alt-item .a-type { font-size: 11px; color: #2563eb; background: #e8f0fe; padding: 2px 8px; border-radius: 10px; flex: none; }
+.alt-empty { color: #5b6b80; text-align: center; padding: 8px; font-size: 12px; }
+
+/* ============ 详情弹窗 ============ */
+.detail-panel .d-topic { font-size: 16px; font-weight: 700; color: #0f1e33; margin-bottom: 6px; }
+.detail-panel .d-meta { color: #5b6b80; margin-bottom: 4px; }
+.detail-panel .d-owner { font-weight: 600; color: #2563eb; margin-bottom: 14px; }
+
+/* ============ Toast ============ */
+#toast-box { position: fixed; top: 64px; right: 20px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  min-width: 240px; max-width: 340px; padding: 10px 14px; border-radius: 8px; font-size: 13px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12); display: flex; align-items: flex-start; gap: 8px;
+  animation: slideIn .25s ease; position: relative;
+}
+.toast.success { background: #e8f5e9; color: #1b5e20; border-left: 3px solid #16a34a; }
+.toast.error { background: #fee2e2; color: #b91c1c; border-left: 3px solid #dc2626; }
+.toast.info { background: #e8f0fe; color: #1e40af; border-left: 3px solid #3b82f6; }
+.toast.fade { animation: fadeOut .3s ease forwards; }
+@keyframes slideIn { from { transform: translateX(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes fadeOut { to { transform: translateX(30px); opacity: 0; } }
+
+/* ============ 快速预约浮动按钮 ============ */
+.fab {
+  position: fixed; right: 24px; bottom: 76px; z-index: 50;
+  background: #3b82f6; color: #fff; border-radius: 22px; padding: 10px 20px;
+  font-size: 14px; font-weight: 700; box-shadow: 0 4px 16px rgba(59,130,246,.4);
+  display: flex; align-items: center; gap: 6px;
+}
+.fab:hover { background: #2f6fe0; }
+
+/* ============ 评审辅助工具栏 ============ */
+#review-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  background: #0f1e33; color: #cbd5e1; padding: 8px 16px;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 12px;
+}
+#review-bar .rb-title { color: #93c5fd; font-weight: 700; flex: none; display: flex; align-items: center; gap: 4px; }
+#review-bar label { display: flex; align-items: center; gap: 5px; cursor: pointer; flex: none; }
+#review-bar input[type=checkbox] { accent-color: #3b82f6; }
+#review-bar select {
+  background: #1c3049; color: #e2e8f0; border: 1px solid #35516f; border-radius: 5px; padding: 3px 6px; flex: none;
+}
+#review-bar button {
+  background: #1c3049; color: #cbd5e1; border: 1px solid #35516f; border-radius: 5px; padding: 4px 10px; flex: none;
+}
+#review-bar button:hover { border-color: #93c5fd; color: #93c5fd; }
+#review-bar .rb-legend { margin-left: auto; display: flex; gap: 10px; flex: none; color: #94a3b8; font-size: 11px; align-items: center; }
+.rb-legend .l0 { background: #3b82f6; } .rb-legend .l1 { background: #f97316; }
+.rb-legend span.leg { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+/* ============ 说明弹层 ============ */
+.help-panel .h-sec { margin-bottom: 12px; }
+.help-panel .h-sec b { color: #2563eb; }
+.help-panel ul { padding-left: 18px; margin-top: 4px; }
+.help-panel li { margin-bottom: 4px; color: #1f2d3d; }
+.help-panel .kbd { background: #f0f5fa; border: 1px solid #dbe4ef; border-radius: 4px; padding: 0 6px; font-size: 11px; }
+
+/* ============ 响应式 ============ */
+@media (max-width: 720px) {
+  .topbar { flex-wrap: wrap; height: auto; padding: 8px 12px; gap: 8px; }
+  .view-nav { order: 3; width: 100%; justify-content: space-between; }
+  .view-nav button { padding: 6px 8px; font-size: 12px; flex: 1; text-align: center; }
+  main { padding: 12px 10px 100px; }
+  .week-grid { overflow-x: auto; }
+  .wg-head, .wg-row { min-width: 560px; }
+  .day-grid { overflow-x: auto; }
+  .dg-head, .dg-row { min-width: 480px; }
+  .my-card { flex-wrap: wrap; }
+  .modal .form-grid { grid-template-columns: 1fr; }
+  #review-bar .rb-legend { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== 登录/注册页 ==================== -->
+<div id="page-auth" class="auth-page">
+  <div class="auth-card">
+    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 14h2v2H9z"/><path d="M14 14h2v2h-2z"/></svg>
+    <h1>企业会议室预约系统</h1>
+    <p class="sub">交互原型 · 覆盖 PRD 功能需求 FR-01 ~ FR-14</p>
+
+    <div class="auth-tabs">
+      <button class="tab active" id="tab-login" style="position:relative;">登录<span class="frb" data-fr="FR-02" data-p="P0">FR-02</span></button>
+      <button class="tab" id="tab-register" style="position:relative;">注册<span class="frb" data-fr="FR-01" data-p="P0">FR-01</span></button>
+    </div>
+
+    <form id="form-login">
+      <div class="form-row">
+        <label>用户名</label>
+        <input type="text" id="login-name" placeholder="请输入用户名" autocomplete="off">
+      </div>
+      <div class="form-row">
+        <label>密码</label>
+        <input type="password" id="login-pw" placeholder="请输入密码">
+      </div>
+      <div class="form-row"><div class="err" id="login-err"></div></div>
+      <button type="submit" class="btn btn-primary">登 录</button>
+    </form>
+
+    <form id="form-register" hidden>
+      <div class="form-row">
+        <label>用户名</label>
+        <input type="text" id="reg-name" placeholder="2-12 个字符" autocomplete="off">
+      </div>
+      <div class="form-row">
+        <label>密码</label>
+        <input type="password" id="reg-pw" placeholder="至少 6 位">
+      </div>
+      <div class="form-row">
+        <label>确认密码</label>
+        <input type="password" id="reg-pw2" placeholder="再次输入密码">
+      </div>
+      <div class="form-row"><div class="err" id="reg-err"></div></div>
+      <button type="submit" class="btn btn-primary">注 册</button>
+    </form>
+
+    <div class="auth-tip">演示账号：张三 / 李四 / 王五，密码均为 123456</div>
+  </div>
+</div>
+
+<!-- ==================== 主应用 ==================== -->
+<div id="page-app" hidden>
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      企业会议室预约系统
+    </div>
+    <nav class="view-nav" style="position:relative;">
+      <button data-view="day" class="active" style="position:relative;">日视图<span class="frb" data-fr="FR-09" data-p="P1">FR-09</span></button>
+      <button data-view="week" style="position:relative;">周视图<span class="frb" data-fr="FR-09" data-p="P1">FR-09</span></button>
+      <button data-view="list" style="position:relative;">列表视图<span class="frb" data-fr="FR-10" data-p="P1">FR-10</span></button>
+      <button data-view="my" style="position:relative;">我的预约<span class="frb" data-fr="FR-06" data-p="P0">FR-06</span></button>
+      <span class="frb" data-fr="FR-11" data-p="P1" style="top:-6px;left:46%;">FR-11</span>
+    </nav>
+    <div class="user-box">
+      <div class="avatar" id="user-avatar">张</div>
+      <span id="current-user">张三</span>
+      <button class="btn btn-sm" id="btn-logout" style="position:relative;">登出<span class="frb" data-fr="FR-02" data-p="P0">FR-02</span></button>
+    </div>
+  </header>
+
+  <main>
+    <!-- 日视图 -->
+    <section id="view-day" class="view">
+      <div class="view-head">
+        <button class="btn btn-sm" id="day-prev">‹ 前一天</button>
+        <span class="date-label" id="day-label"></span>
+        <button class="btn btn-sm" id="day-next">后一天 ›</button>
+        <button class="btn btn-sm" id="day-today">今天</button>
+        <span class="spacer"></span>
+        <span class="hint" style="position:relative;">点击绿色空闲格可直接预约（先查后订）<span class="fr-tag" data-fr="FR-04" data-p="P0">FR-04</span></span>
+      </div>
+      <div class="day-grid" id="day-grid"></div>
+    </section>
+
+    <!-- 周视图 -->
+    <section id="view-week" class="view" hidden>
+      <div class="view-head">
+        <button class="btn btn-sm" id="week-prev">‹ 上一周</button>
+        <span class="date-label" id="week-label"></span>
+        <button class="btn btn-sm" id="week-next">下一周 ›</button>
+        <button class="btn btn-sm" id="week-today">本周</button>
+        <span class="spacer"></span>
+        <span class="hint">每格三个小方块对应三间会议室（绿=空闲 红=占用），点击格子进入该天日视图</span>
+      </div>
+      <div class="week-grid" id="week-grid"></div>
+    </section>
+
+    <!-- 列表视图 -->
+    <section id="view-list" class="view" hidden>
+      <div class="view-head">
+        <button class="btn btn-sm" id="list-prev">‹ 前一天</button>
+        <span class="date-label" id="list-label"></span>
+        <button class="btn btn-sm" id="list-next">后一天 ›</button>
+        <button class="btn btn-sm" id="list-today">今天</button>
+        <span class="spacer"></span>
+        <span class="hint" style="position:relative;">按会议室列出时段明细<span class="fr-tag" data-fr="FR-10" data-p="P1">FR-10</span></span>
+      </div>
+      <div id="list-view"></div>
+    </section>
+
+    <!-- 我的预约 -->
+    <section id="view-my" class="view" hidden>
+      <div class="view-head">
+        <span class="date-label">我的预约</span>
+        <span class="hint" style="position:relative;">按时间倒序 · 仅本人可见 · 可修改可取消<span class="fr-tag" data-fr="FR-07" data-p="P0">FR-07</span><span class="fr-tag" data-fr="FR-12" data-p="P1">FR-12</span></span>
+      </div>
+      <div id="my-list"></div>
+    </section>
+
+    <button class="fab" id="btn-new-booking" style="position:relative;">＋ 快速预约<span class="frb" data-fr="FR-03" data-p="P0">FR-03</span></button>
+  </main>
+</div>
+<!-- ==================== 预约/修改弹窗 ==================== -->
+<div class="modal-mask" id="modal-booking" hidden>
+  <div class="modal">
+    <h3><span id="bk-modal-title">发起预约</span><span class="fr-tag" data-fr="FR-03" data-p="P0" id="bk-fr3">FR-03</span><span class="fr-tag" data-fr="FR-04" data-p="P0" id="bk-fr4">FR-04</span></h3>
+    <div class="form-grid">
+      <div class="form-row">
+        <label>日期</label>
+        <input type="date" id="bk-date">
+      </div>
+      <div class="form-row">
+        <label>会议室</label>
+        <select id="bk-room"></select>
+      </div>
+      <div class="form-row">
+        <label>开始时间</label>
+        <select id="bk-start"></select>
+      </div>
+      <div class="form-row">
+        <label>时长</label>
+        <select id="bk-len">
+          <option value="1">1 小时</option>
+          <option value="2">2 小时</option>
+          <option value="3">3 小时</option>
+        </select>
+      </div>
+      <div class="form-row full">
+        <label>会议主题</label>
+        <input type="text" id="bk-topic" placeholder="请输入会议主题（必填）" maxlength="30">
+      </div>
+      <div class="form-row full"><div class="err" id="bk-err"></div></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn" id="bk-close">取消</button>
+      <button class="btn btn-primary" id="bk-submit">提交预约</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 冲突 + 替代推荐弹窗 ==================== -->
+<div class="modal-mask" id="modal-conflict" hidden>
+  <div class="modal conflict-panel">
+    <h3>⚠ 预约冲突<span class="fr-tag" data-fr="FR-05" data-p="P0">FR-05</span><span class="fr-tag" data-fr="FR-13" data-p="P1">FR-13</span></h3>
+    <div class="c-msg" id="conflict-msg"></div>
+    <div class="alt-title">为您推荐以下替代方案（点击可直接改订）：</div>
+    <div id="alt-list"></div>
+    <div class="modal-btns">
+      <button class="btn" id="conflict-close">关闭</button>
+      <button class="btn btn-primary" id="conflict-back">调整原预约</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 预约详情弹窗 ==================== -->
+<div class="modal-mask" id="modal-detail" hidden>
+  <div class="modal detail-panel">
+    <h3>预约详情</h3>
+    <div class="d-topic" id="dt-topic"></div>
+    <div class="d-meta" id="dt-time"></div>
+    <div class="d-meta" id="dt-room"></div>
+    <div class="d-owner" id="dt-owner"></div>
+    <div class="modal-btns" id="dt-btns"></div>
+  </div>
+</div>
+
+<!-- ==================== 说明弹层 ==================== -->
+<div class="modal-mask" id="modal-help" hidden>
+  <div class="modal help-panel">
+    <h3>原型使用说明</h3>
+    <div class="h-sec"><b>覆盖功能</b>：FR-01~FR-14 全部功能点（P0 蓝色角标 / P1 橙色角标，可在底部工具栏开关显示）。</div>
+    <div class="h-sec"><b>演示账号</b>：张三 / 李四 / 王五，密码均为 123456。</div>
+    <div class="h-sec"><b>建议测试路径</b>
+      <ul>
+        <li>登录 <span class="kbd">张三</span> → 日视图点击今天 10:00 第一会议室绿色空闲格 → 填主题提交 → 体验快速预约</li>
+        <li>登录 <span class="kbd">李四</span> → 预约今天 10:00-12:00 第一会议室 → 体验<strong>冲突拒绝 + 替代推荐</strong>（FR-05/FR-13）</li>
+        <li>我的预约 → 修改时间/会议室（FR-12）、取消预约（FR-07）</li>
+        <li>底部工具栏切换用户，验证"我的预约"权限隔离与他人预约可见性（FR-02/FR-06）</li>
+      </ul>
+    </div>
+    <div class="h-sec"><b>数据说明</b>：原型用 localStorage 模拟正式版的 JSON 文件持久化（FR-08）；正式版由 Node.js 单文件后端统一读写共享 JSON，实现跨设备多人共享。</div>
+    <div class="modal-btns"><button class="btn btn-primary" id="help-close">我知道了</button></div>
+  </div>
+</div>
+
+<!-- Toast 消息 -->
+<div id="toast-box"></div>
+
+<!-- ==================== 评审辅助工具栏 ==================== -->
+<div id="review-bar">
+  <span class="rb-title">🧪 评审辅助</span>
+  <label><input type="checkbox" id="chk-fr"> FR 标注</label>
+  <button id="btn-fill">一键填满演示数据</button>
+  <label>切换用户
+    <select id="sel-user">
+      <option value="u1">张三</option>
+      <option value="u2">李四</option>
+      <option value="u3">王五</option>
+    </select>
+  </label>
+  <button id="btn-reset">重置数据</button>
+  <button id="btn-help">使用说明</button>
+  <span class="rb-legend"><span class="leg l0"></span>P0 必须有&nbsp;&nbsp;<span class="leg l1"></span>P1 应该有</span>
+</div>
+<script>
+'use strict';
+/* ================================================================
+ * 企业会议室预约系统 — 交互原型
+ * 覆盖 FR-01~FR-14；localStorage 模拟 JSON 持久化（FR-08）
+ * ================================================================ */
+
+/* ---------------- 常量与状态 ---------------- */
+var LS_DATA = 'meetingRoomProtoData_v2';
+var LS_SESSION = 'meetingRoomProtoSession_v2';
+var ROOMS = [
+  { id: 1, name: '第一会议室' },
+  { id: 2, name: '第二会议室' },
+  { id: 3, name: '第三会议室' }
+];
+var HOURS = []; // 起始小时 8~19
+for (var h = 8; h < 20; h++) HOURS.push(h);
+
+var TOPICS = ['项目周会', '客户访谈', '产品复盘', '需求评审', '头脑风暴', '季度总结', '团队例会', '面试'];
+
+var state = null;      // { users, bookings, seq }
+var session = null;    // 当前登录 userId
+var curView = 'day';   // day / week / list / my
+var curDate = new Date(); // 当前查看的日期
+
+/* ---------------- 工具函数 ---------------- */
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+function dateKey(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function hashPw(s) { // 原型用简单 djb2 模拟密码哈希（NFR-08）
+  var h = 5381;
+  for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
+  return 'h' + h.toString(36);
+}
+function fmtHour(h) { return pad(h) + ':00'; }
+function fmtRange(s, e) { return fmtHour(s) + ' - ' + fmtHour(e); }
+function addDays(d, n) { var r = new Date(d); r.setDate(r.getDate() + n); return r; }
+function roomById(id) { return ROOMS.filter(function (r) { return r.id === id; })[0]; }
+function userById(id) { return state.users.filter(function (u) { return u.id === id; })[0]; }
+function isPast(dateStr, start) {
+  var now = new Date();
+  return dateStr < dateKey(now) || (dateStr === dateKey(now) && start <= now.getHours());
+}
+
+/* ---------------- 数据持久化（FR-08） ---------------- */
+function saveState() { localStorage.setItem(LS_DATA, JSON.stringify(state)); }
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(LS_DATA)); } catch (e) { return null; }
+}
+function initState() {
+  var s = loadState();
+  if (s && s.users && s.bookings) { state = s; return; }
+  state = buildDemo();
+  saveState();
+}
+function buildDemo() {
+  var today = dateKey(new Date());
+  return {
+    users: [
+      { id: 'u1', name: '张三', pw: hashPw('123456') },
+      { id: 'u2', name: '李四', pw: hashPw('123456') },
+      { id: 'u3', name: '王五', pw: hashPw('123456') }
+    ],
+    bookings: [
+      { id: 'b1', roomId: 1, date: today, start: 10, end: 12, topic: '项目周会', userId: 'u1', uname: '张三', ctime: Date.now() },
+      { id: 'b2', roomId: 2, date: today, start: 14, end: 15, topic: '客户访谈', userId: 'u2', uname: '李四', ctime: Date.now() },
+      { id: 'b3', roomId: 3, date: today, start: 16, end: 17, topic: '产品复盘', userId: 'u3', uname: '王五', ctime: Date.now() }
+    ],
+    seq: 10
+  };
+}
+
+/* ---------------- 认证（FR-01 / FR-02） ---------------- */
+function switchAuthTab(which) {
+  var isLogin = which === 'login';
+  $('tab-login').classList.toggle('active', isLogin);
+  $('tab-register').classList.toggle('active', !isLogin);
+  $('form-login').hidden = !isLogin;
+  $('form-register').hidden = isLogin;
+  $('login-err').textContent = '';
+  $('reg-err').textContent = '';
+}
+function doRegister(name, pw) {
+  name = name.trim();
+  if (name.length < 2 || name.length > 12) return '用户名需 2-12 个字符';
+  if (/^[0-9]+$/.test(name)) return '用户名不能为纯数字';
+  if (pw.length < 6) return '密码至少 6 位';
+  if (state.users.some(function (u) { return u.name === name; })) return '该用户名已被注册';
+  var id = 'u' + (++state.seq) + '_' + Date.now().toString(36);
+  state.users.push({ id: id, name: name, pw: hashPw(pw) });
+  saveState();
+  session = id;
+  localStorage.setItem(LS_SESSION, id);
+  toast('success', '注册成功，欢迎 ' + name);
+  enterApp();
+  return '';
+}
+function doLogin(name, pw) {
+  name = name.trim();
+  var u = state.users.filter(function (x) { return x.name === name; })[0];
+  if (!u || u.pw !== hashPw(pw)) return '用户名或密码错误';
+  session = u.id;
+  localStorage.setItem(LS_SESSION, u.id);
+  toast('success', '登录成功，欢迎 ' + u.name);
+  enterApp();
+  return '';
+}
+function doLogout() {
+  session = null;
+  localStorage.removeItem(LS_SESSION);
+  $('page-app').hidden = true;
+  $('page-auth').hidden = false;
+  $('login-name').value = '';
+  $('login-pw').value = '';
+  switchAuthTab('login');
+}
+function currentUser() { return session ? userById(session) : null; }
+
+function enterApp() {
+  var u = currentUser();
+  if (!u) return;
+  $('page-auth').hidden = true;
+  $('page-app').hidden = false;
+  $('current-user').textContent = u.name;
+  $('user-avatar').textContent = u.name.charAt(0);
+  curDate = new Date();
+  switchView('day');
+}
+
+/* ---------------- 视图切换（FR-11） ---------------- */
+function switchView(name) {
+  curView = name;
+  ['day', 'week', 'list', 'my'].forEach(function (v) {
+    $('view-' + v).hidden = v !== name;
+  });
+  document.querySelectorAll('.view-nav button').forEach(function (b) {
+    b.classList.toggle('active', b.getAttribute('data-view') === name);
+  });
+  render();
+}
+function render() {
+  if (curView === 'day') renderDay();
+  else if (curView === 'week') renderWeek();
+  else if (curView === 'list') renderList();
+  else renderMy();
+}
+
+/* ---------------- 预约查询与冲突检测（FR-05） ---------------- */
+function bookingsOf(dateStr, roomId) {
+  return state.bookings.filter(function (b) {
+    return b.date === dateStr && (roomId ? b.roomId === roomId : true);
+  });
+}
+function findConflict(dateStr, start, end, roomId, excludeId) {
+  return state.bookings.find(function (b) {
+    return b.roomId === roomId && b.date === dateStr && b.id !== excludeId &&
+      b.start < end && start < b.end;
+  }) || null;
+}
+
+/* ---------------- 替代推荐（FR-13） ---------------- */
+function suggestAlts(dateStr, start, end, roomId) {
+  var alts = [];
+  var len = end - start;
+  // 1. 其他会议室同时段空闲
+  ROOMS.forEach(function (r) {
+    if (r.id !== roomId && !findConflict(dateStr, start, end, r.id, null)) {
+      alts.push({ roomId: r.id, start: start, end: end,
+        label: r.name + ' ' + fmtRange(start, end), type: '换会议室' });
+    }
+  });
+  // 2. 同一会议室邻近时段（前后 1-2 小时）
+  for (var s = start - 2; s <= start + 2; s++) {
+    if (s < 8 || s + len > 20 || s === start) continue;
+    if (!findConflict(dateStr, s, s + len, roomId, null)) {
+      alts.push({ roomId: roomId, start: s, end: s + len,
+        label: roomById(roomId).name + ' ' + fmtRange(s, s + len), type: '邻近时段' });
+    }
+  }
+  return alts.slice(0, 6);
+}
+
+/* ---------------- 预约提交（FR-03 / FR-05 / FR-13） ---------------- */
+var bkMode = 'new';   // new | edit
+var bkEditId = null;
+var bkCtx = null;     // 冲突上下文 {date,start,end,roomId,topic}
+
+function openBookingModal(opt) {
+  opt = opt || {};
+  bkMode = opt.editId ? 'edit' : 'new';
+  bkEditId = opt.editId || null;
+  $('bk-modal-title').textContent = bkMode === 'edit' ? '修改预约' : '发起预约';
+  $('bk-err').textContent = '';
+  // 会议室选项
+  $('bk-room').innerHTML = ROOMS.map(function (r) {
+    return '<option value="' + r.id + '">' + esc(r.name) + '</option>';
+  }).join('');
+  // 开始时间选项
+  $('bk-start').innerHTML = HOURS.map(function (h) {
+    return '<option value="' + h + '">' + fmtHour(h) + '</option>';
+  }).join('');
+  if (bkMode === 'edit') {
+    var b = state.bookings.filter(function (x) { return x.id === bkEditId; })[0];
+    if (!b) return;
+    $('bk-date').value = b.date;
+    $('bk-room').value = b.roomId;
+    $('bk-start').value = b.start;
+    $('bk-len').value = (b.end - b.start);
+    $('bk-topic').value = b.topic;
+  } else {
+    $('bk-date').value = opt.date || dateKey(curDate);
+    $('bk-room').value = opt.roomId || ROOMS[0].id;
+    $('bk-start').value = opt.start != null ? opt.start : 9;
+    $('bk-len').value = opt.len || 1;
+    $('bk-topic').value = '';
+    setTimeout(function () { $('bk-topic').focus(); }, 50);
+  }
+  $('modal-booking').hidden = false;
+}
+function closeBookingModal() { $('modal-booking').hidden = true; }
+
+function submitBooking() {
+  var u = currentUser();
+  if (!u) return;
+  var dateStr = $('bk-date').value;
+  var roomId = parseInt($('bk-room').value, 10);
+  var start = parseInt($('bk-start').value, 10);
+  var len = parseInt($('bk-len').value, 10);
+  var topic = $('bk-topic').value.trim();
+  var end = start + len;
+  if (!dateStr) return showBkErr('请选择日期');
+  if (!topic) return showBkErr('请填写会议主题');
+  if (end > 20) return showBkErr('结束时间不能超过 20:00');
+
+  var conflict = findConflict(dateStr, start, end, roomId, bkEditId);
+  if (conflict) {
+    closeBookingModal();
+    showConflictPanel({ date: dateStr, start: start, end: end, roomId: roomId, topic: topic }, conflict);
+    return;
+  }
+  if (bkMode === 'edit') {
+    var b = state.bookings.filter(function (x) { return x.id === bkEditId; })[0];
+    b.date = dateStr; b.roomId = roomId; b.start = start; b.end = end; b.topic = topic;
+    saveState();
+    toast('success', '预约已修改：' + roomById(roomId).name + ' ' + dateStr + ' ' + fmtRange(start, end));
+  } else {
+    var id = 'b' + (++state.seq) + '_' + Date.now().toString(36);
+    state.bookings.push({ id: id, roomId: roomId, date: dateStr, start: start, end: end,
+      topic: topic, userId: u.id, uname: u.name, ctime: Date.now() });
+    saveState();
+    toast('success', '预约成功：' + roomById(roomId).name + ' ' + dateStr + ' ' + fmtRange(start, end));
+  }
+  closeBookingModal();
+  render();
+}
+function showBkErr(msg) { $('bk-err').textContent = msg; }
+
+/* ---------------- 冲突面板（FR-05 / FR-13） ---------------- */
+function showConflictPanel(ctx, conflict) {
+  bkCtx = ctx;
+  $('conflict-msg').innerHTML = esc(ctx.date + ' ' + fmtRange(ctx.start, ctx.end) + ' ' +
+    roomById(ctx.roomId).name) + ' 已被 <b>' + esc(conflict.uname) + '</b> 预约（主题：' +
+    esc(conflict.topic) + '）。按"先到先得"规则，本次预约被拒绝。';
+  var alts = suggestAlts(ctx.date, ctx.start, ctx.end, ctx.roomId);
+  var box = $('alt-list');
+  if (!alts.length) {
+    box.innerHTML = '<div class="alt-empty">当天暂无可推荐的替代方案，请更换日期</div>';
+  } else {
+    box.innerHTML = alts.map(function (a, i) {
+      return '<button class="alt-item" data-alt="' + i + '">' +
+        '<span class="a-label">' + esc(a.label) + '</span>' +
+        '<span class="a-type">' + esc(a.type) + '</span></button>';
+    }).join('');
+    box.querySelectorAll('.alt-item').forEach(function (btn) {
+      btn.onclick = function () {
+        var a = alts[parseInt(btn.getAttribute('data-alt'), 10)];
+        applyAlt(a);
+      };
+    });
+  }
+  $('modal-conflict').hidden = false;
+}
+function applyAlt(a) {
+  var u = currentUser();
+  if (!u || !bkCtx) return;
+  var id = 'b' + (++state.seq) + '_' + Date.now().toString(36);
+  state.bookings.push({ id: id, roomId: a.roomId, date: bkCtx.date, start: a.start, end: a.end,
+    topic: bkCtx.topic, userId: u.id, uname: u.name, ctime: Date.now() });
+  saveState();
+  $('modal-conflict').hidden = true;
+  toast('success', '已按推荐改订成功：' + roomById(a.roomId).name + ' ' + bkCtx.date + ' ' + fmtRange(a.start, a.end));
+  render();
+}
+function closeConflictPanel() { $('modal-conflict').hidden = true; }
+
+/* ---------------- 取消预约（FR-07） ---------------- */
+function cancelBooking(id) {
+  var u = currentUser();
+  var b = state.bookings.filter(function (x) { return x.id === id; })[0];
+  if (!u || !b) return;
+  if (b.userId !== u.id) return toast('error', '只能取消本人的预约');
+  if (isPast(b.date, b.start)) return toast('error', '该会议时段已开始或已过去，无法取消');
+  if (!window.confirm('确定取消这条预约吗？\n\n' + b.topic + '\n' + b.date + ' ' + fmtRange(b.start, b.end) + ' ' + roomById(b.roomId).name)) return;
+  state.bookings = state.bookings.filter(function (x) { return x.id !== id; });
+  saveState();
+  toast('info', '预约已取消，时段已释放');
+  closeDetailModal();
+  render();
+}
+</script>
+<script>
+'use strict';
+/* ================= 视图渲染 ================= */
+
+/* ---------------- 日视图（FR-09） ---------------- */
+var WEEK_CN = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+function renderDay() {
+  var dateStr = dateKey(curDate);
+  $('day-label').textContent = dateStr + ' ' + WEEK_CN[curDate.getDay()];
+  var bookings = bookingsOf(dateStr);
+  var head = '<div class="dg-head"><div style="position:relative;">时间<span class="frb" data-fr="FR-09" data-p="P1">FR-09</span></div>';
+  ROOMS.forEach(function (r) {
+    head += '<div style="position:relative;">' + esc(r.name) + '</div>';
+  });
+  head += '</div>';
+  var rows = '';
+  var u = currentUser();
+  HOURS.forEach(function (h) {
+    rows += '<div class="dg-row"><div class="dg-time">' + fmtRange(h, h + 1) + '</div>';
+    ROOMS.forEach(function (r) {
+      var b = bookings.filter(function (x) { return x.roomId === r.id && x.start <= h && h < x.end; })[0];
+      if (b) {
+        var mine = u && b.userId === u.id;
+        rows += '<div class="dg-cell dg-busy' + (mine ? ' mine' : '') + '" data-detail="' + b.id + '" style="position:relative;">' +
+          '<span class="btopic">' + esc(b.topic) + '</span>' +
+          '<span class="bowner">' + esc(b.uname) + (mine ? '（我）' : '') + '</span></div>';
+      } else {
+        rows += '<div class="dg-cell dg-free" data-hour="' + h + '" data-room="' + r.id + '" style="position:relative;">' +
+          '<span class="plus">＋</span></div>';
+      }
+    });
+    rows += '</div>';
+  });
+  $('day-grid').innerHTML = head + rows;
+  $('day-grid').querySelectorAll('.dg-free').forEach(function (c) {
+    c.onclick = function () {
+      openBookingModal({ date: dateStr, roomId: parseInt(c.getAttribute('data-room'), 10),
+        start: parseInt(c.getAttribute('data-hour'), 10), len: 1 });
+    };
+  });
+  $('day-grid').querySelectorAll('.dg-busy').forEach(function (c) {
+    c.onclick = function () { openDetailModal(c.getAttribute('data-detail')); };
+  });
+}
+
+/* ---------------- 周视图（FR-09） ---------------- */
+function renderWeek() {
+  var d = new Date(curDate);
+  d.setDate(d.getDate() - d.getDay()); // 本周日
+  var days = [];
+  for (var i = 0; i < 7; i++) { days.push(new Date(d)); d.setDate(d.getDate() + 1); }
+  $('week-label').textContent = dateKey(days[0]) + ' ~ ' + dateKey(days[6]);
+  var todayStr = dateKey(new Date());
+  var head = '<div class="wg-head"><div>时段</div>';
+  days.forEach(function (dd) {
+    var today = dateKey(dd) === todayStr;
+    head += '<div class="' + (today ? 'today-col' : '') + '">' + WEEK_CN[dd.getDay()] +
+      '<small>' + (dd.getMonth() + 1) + '/' + dd.getDate() + '</small></div>';
+  });
+  head += '</div>';
+  var rows = '';
+  HOURS.forEach(function (h) {
+    rows += '<div class="wg-row"><div class="wg-time">' + fmtRange(h, h + 1) + '</div>';
+    days.forEach(function (dd) {
+      var dateStr = dateKey(dd);
+      var busyCount = 0;
+      var dots = ROOMS.map(function (r) {
+        var busy = state.bookings.some(function (b) {
+          return b.date === dateStr && b.roomId === r.id && b.start <= h && h < b.end;
+        });
+        if (busy) busyCount++;
+        return '<span class="wdot ' + (busy ? 'busy' : 'free') + '"></span>';
+      }).join('');
+      rows += '<div class="wg-cell" data-go="' + dateStr + '">' + dots +
+        '<span class="wcount">' + (busyCount === 0 ? '空' : busyCount + '/3') + '</span></div>';
+    });
+    rows += '</div>';
+  });
+  $('week-grid').innerHTML = head + rows;
+  $('week-grid').querySelectorAll('.wg-cell').forEach(function (c) {
+    c.onclick = function () {
+      var k = c.getAttribute('data-go');
+      curDate = new Date(k.replace(/-/g, '/'));
+      switchView('day'); // FR-11：切换视图保持日期上下文
+    };
+  });
+}
+
+/* ---------------- 列表视图（FR-10） ---------------- */
+function renderList() {
+  var dateStr = dateKey(curDate);
+  $('list-label').textContent = dateStr + ' ' + WEEK_CN[curDate.getDay()];
+  var html = '';
+  ROOMS.forEach(function (r) {
+    var list = bookingsOf(dateStr, r.id).sort(function (a, b) { return a.start - b.start; });
+    var busyN = list.length;
+    var rows = '';
+    if (!list.length) {
+      rows = '<div class="slot-item"><span class="s-info">全天空闲，可直接预约</span>' +
+        '<button class="btn btn-sm btn-primary s-act" data-book-room="' + r.id + '" style="position:relative;">预约<span class="frb" data-fr="FR-03" data-p="P0">FR-03</span></button></div>';
+    } else {
+      list.forEach(function (b) {
+        rows += '<div class="slot-item" style="position:relative;">' +
+          '<span class="s-time">' + fmtRange(b.start, b.end) +
+          '<span class="frb" data-fr="FR-10" data-p="P1">FR-10</span></span>' +
+          '<span class="s-info">' + esc(b.topic) + ' · ' + esc(b.uname) + '</span>' +
+          '<span class="s-badge busy">已占用</span></div>';
+      });
+      // 补充空闲时段
+      var free = [];
+      var cursor = 8;
+      list.forEach(function (b) {
+        if (b.start > cursor) free.push([cursor, b.start]);
+        cursor = Math.max(cursor, b.end);
+      });
+      if (cursor < 20) free.push([cursor, 20]);
+      free.forEach(function (f) {
+        var s = f[0], e = f[1];
+        rows += '<div class="slot-item"><span class="s-time">' + fmtRange(s, e) + '</span>' +
+          '<span class="s-info">空闲可约</span><span class="s-badge free">空闲</span>' +
+          '<button class="btn btn-sm s-act" data-book-room="' + r.id + '" data-book-start="' + s + '">预约</button></div>';
+      });
+    }
+    html += '<div class="room-group"><div class="rg-title">' + esc(r.name) +
+      '<span class="rg-count">当日 ' + busyN + ' 场会议</span></div>' + rows + '</div>';
+  });
+  $('list-view').innerHTML = html;
+  $('list-view').querySelectorAll('[data-book-room]').forEach(function (btn) {
+    btn.onclick = function () {
+      openBookingModal({ date: dateStr, roomId: parseInt(btn.getAttribute('data-book-room'), 10),
+        start: parseInt(btn.getAttribute('data-book-start') || '9', 10), len: 1 });
+    };
+  });
+}
+
+/* ---------------- 我的预约（FR-06） ---------------- */
+function renderMy() {
+  var u = currentUser();
+  var mine = state.bookings.filter(function (b) { return b.userId === u.id; })
+    .sort(function (a, b) { return (a.date + a.start) < (b.date + b.start) ? 1 : -1; });
+  if (!mine.length) {
+    $('my-list').innerHTML = '<div class="empty-tip">暂无预约记录<br><br>' +
+      '<button class="btn btn-primary" id="my-new">＋ 发起第一条预约</button></div>';
+    $('my-new').onclick = function () { openBookingModal({}); };
+    return;
+  }
+  $('my-list').innerHTML = mine.map(function (b) {
+    var past = isPast(b.date, b.start);
+    var dd = new Date(b.date.replace(/-/g, '/'));
+    return '<div class="my-card' + (past ? ' past' : '') + '" style="position:relative;">' +
+      '<div class="m-date"><div class="d1">' + (dd.getMonth() + 1) + '/' + dd.getDate() + '</div>' +
+      '<div class="d2">' + WEEK_CN[dd.getDay()] + '</div></div>' +
+      '<div class="m-main"><div class="t">' + esc(b.topic) + '</div>' +
+      '<div class="meta">' + esc(roomById(b.roomId).name) + ' · ' + fmtRange(b.start, b.end) +
+      (past ? ' · 已结束' : '') + '</div></div>' +
+      '<div class="m-actions">' +
+      '<span class="frb" data-fr="FR-06" data-p="P0">FR-06</span>' +
+      (past ? '' :
+        '<button class="btn btn-sm" data-modify="' + b.id + '" style="position:relative;">修改<span class="frb" data-fr="FR-12" data-p="P1">FR-12</span></button>' +
+        '<button class="btn btn-sm btn-danger" data-cancel="' + b.id + '">取消</button>') +
+      '</div></div>';
+  }).join('');
+  $('my-list').querySelectorAll('[data-modify]').forEach(function (btn) {
+    btn.onclick = function () { openBookingModal({ editId: btn.getAttribute('data-modify') }); };
+  });
+  $('my-list').querySelectorAll('[data-cancel]').forEach(function (btn) {
+    btn.onclick = function () { cancelBooking(btn.getAttribute('data-cancel')); };
+  });
+}
+
+/* ---------------- 详情弹窗 ---------------- */
+function openDetailModal(id) {
+  var b = state.bookings.filter(function (x) { return x.id === id; })[0];
+  if (!b) return;
+  var u = currentUser();
+  var mine = u && b.userId === u.id;
+  var past = isPast(b.date, b.start);
+  $('dt-topic').textContent = b.topic;
+  $('dt-time').textContent = '时间：' + b.date + ' ' + WEEK_CN[new Date(b.date.replace(/-/g, '/')).getDay()] + ' ' + fmtRange(b.start, b.end);
+  $('dt-room').textContent = '会议室：' + roomById(b.roomId).name;
+  $('dt-owner').textContent = '预约人：' + b.uname + (mine ? '（我）' : '');
+  var btns = '';
+  if (mine && !past) {
+    btns = '<button class="btn" onclick="closeDetailModal()">关闭</button>' +
+      '<button class="btn btn-primary" onclick="openBookingModal({editId:\'' + b.id + '\'})">修改</button>' +
+      '<button class="btn btn-danger" onclick="cancelBooking(\'' + b.id + '\')">取消预约</button>';
+  } else {
+    btns = '<button class="btn btn-primary" onclick="closeDetailModal()">关闭</button>';
+  }
+  $('dt-btns').innerHTML = btns;
+  $('modal-detail').hidden = false;
+}
+function closeDetailModal() { $('modal-detail').hidden = true; }
+
+/* ================= 站内消息（FR-14） ================= */
+function toast(type, msg) {
+  var box = $('toast-box');
+  var el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  box.appendChild(el);
+  setTimeout(function () {
+    el.classList.add('fade');
+    setTimeout(function () { el.remove(); }, 300);
+  }, 2600);
+}
+
+/* ================= 评审辅助 ================= */
+function fillDemoData() {
+  var today = new Date();
+  var added = 0;
+  TOPICS.forEach(function (tp, i) {
+    var d = addDays(today, i < 5 ? 0 : 1);
+    var roomId = (i % 3) + 1;
+    var start = 9 + (i % 4) * 2;
+    var end = start + (i % 2 === 0 ? 2 : 1);
+    if (end > 20) end = 20;
+    if (findConflict(dateKey(d), start, end, roomId, null)) return; // 跳过冲突
+    var u = state.users[i % state.users.length];
+    state.bookings.push({ id: 'b' + (++state.seq) + '_' + Date.now().toString(36),
+      roomId: roomId, date: dateKey(d), start: start, end: end, topic: tp,
+      userId: u.id, uname: u.name, ctime: Date.now() });
+    added++;
+  });
+  saveState();
+  toast('info', '已生成 ' + added + ' 条演示预约，切换视图查看');
+  render();
+}
+function resetAll() {
+  if (!window.confirm('确定重置全部数据吗？将恢复初始演示数据并退出登录。')) return;
+  localStorage.removeItem(LS_DATA);
+  localStorage.removeItem(LS_SESSION);
+  state = buildDemo();
+  saveState();
+  toast('info', '数据已重置为初始演示状态');
+  doLogout();
+}
+function bindReviewBar() {
+  $('chk-fr').onchange = function () {
+    document.body.classList.toggle('fr-on', $('chk-fr').checked);
+  };
+  $('btn-fill').onclick = fillDemoData;
+  $('btn-reset').onclick = resetAll;
+  $('btn-help').onclick = function () { $('modal-help').hidden = false; };
+  $('help-close').onclick = function () { $('modal-help').hidden = true; };
+  $('sel-user').onchange = function () {
+    var uid = $('sel-user').value;
+    var u = userById(uid);
+    if (!u) return;
+    session = uid;
+    localStorage.setItem(LS_SESSION, uid);
+    $('current-user').textContent = u.name;
+    $('user-avatar').textContent = u.name.charAt(0);
+    toast('info', '已切换为 ' + u.name + '，请查看"我的预约"验证权限隔离');
+    render();
+  };
+}
+
+/* ================= 事件绑定与初始化 ================= */
+function bindEvents() {
+  // 认证
+  $('tab-login').onclick = function () { switchAuthTab('login'); };
+  $('tab-register').onclick = function () { switchAuthTab('register'); };
+  $('form-login').onsubmit = function (e) {
+    e.preventDefault();
+    var err = doLogin($('login-name').value, $('login-pw').value);
+    $('login-err').textContent = err;
+  };
+  $('form-register').onsubmit = function (e) {
+    e.preventDefault();
+    if ($('reg-pw').value !== $('reg-pw2').value) {
+      $('reg-err').textContent = '两次输入的密码不一致'; return;
+    }
+    var err = doRegister($('reg-name').value, $('reg-pw').value);
+    $('reg-err').textContent = err;
+  };
+  $('btn-logout').onclick = doLogout;
+
+  // 导航
+  document.querySelectorAll('.view-nav button').forEach(function (b) {
+    b.onclick = function () { switchView(b.getAttribute('data-view')); };
+  });
+
+  // 日视图导航
+  $('day-prev').onclick = function () { curDate = addDays(curDate, -1); renderDay(); };
+  $('day-next').onclick = function () { curDate = addDays(curDate, 1); renderDay(); };
+  $('day-today').onclick = function () { curDate = new Date(); renderDay(); };
+
+  // 周视图导航
+  $('week-prev').onclick = function () { curDate = addDays(curDate, -7); renderWeek(); };
+  $('week-next').onclick = function () { curDate = addDays(curDate, 7); renderWeek(); };
+  $('week-today').onclick = function () { curDate = new Date(); renderWeek(); };
+
+  // 列表视图导航
+  $('list-prev').onclick = function () { curDate = addDays(curDate, -1); renderList(); };
+  $('list-next').onclick = function () { curDate = addDays(curDate, 1); renderList(); };
+  $('list-today').onclick = function () { curDate = new Date(); renderList(); };
+
+  // 快速预约
+  $('btn-new-booking').onclick = function () { openBookingModal({}); };
+
+  // 预约弹窗
+  $('bk-close').onclick = closeBookingModal;
+  $('bk-submit').onclick = submitBooking;
+  $('modal-booking').addEventListener('click', function (e) {
+    if (e.target === this) closeBookingModal();
+  });
+
+  // 冲突面板
+  $('conflict-close').onclick = closeConflictPanel;
+  $('conflict-back').onclick = function () {
+    closeConflictPanel();
+    openBookingModal({ date: bkCtx.date, roomId: bkCtx.roomId, start: bkCtx.start,
+      len: bkCtx.end - bkCtx.start });
+    $('bk-topic').value = bkCtx.topic;
+  };
+  $('modal-conflict').addEventListener('click', function (e) {
+    if (e.target === this) closeConflictPanel();
+  });
+
+  // 详情/说明弹窗遮罩
+  $('modal-detail').addEventListener('click', function (e) {
+    if (e.target === this) closeDetailModal();
+  });
+  $('modal-help').addEventListener('click', function (e) {
+    if (e.target === this) $('modal-help').hidden = true;
+  });
+}
+
+/* ---------------- 启动 ---------------- */
+(function init() {
+  initState();
+  bindEvents();
+  bindReviewBar();
+  var saved = localStorage.getItem(LS_SESSION);
+  if (saved && state.users.some(function (u) { return u.id === saved; })) {
+    session = saved;
+    enterApp();
+  } else {
+    $('page-app').hidden = true;
+    $('page-auth').hidden = false;
+  }
+})();
+</script>
+</body>
+</html>
+
+
+
+
